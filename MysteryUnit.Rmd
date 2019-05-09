@@ -1,0 +1,86 @@
+---
+title: "MysteryUnit"
+author: "Mandy"
+date: "May 9, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Load datasets
+scores <- read.csv("scores.csv")
+tweets <- read.csv("tweets.csv")
+
+#social network analysis
+
+library(igraph)
+library(dplyr)
+# Manipulate the data
+edge_rp <- count(tweets, id, reply)
+edge_rp <- na.omit(edge_rp)
+colnames(edge_rp) <- c("from", "to", "count")
+edge_rp <- as.data.frame(edge_rp)
+edge_rp2 <- count(edge_rp, from)
+edge_rp2 <- as.data.frame(edge_rp2)
+vert_rp <- select(tweets, id)
+colnames(vert_rp) <- "from"
+vert_rp <- distinct(vert_rp)
+g_rp <- graph.data.frame(edge_rp, directed=TRUE, vertices=vert_rp)
+## Visualization
+pdf("g_rp.pdf")
+plot(g_rp, layout=layout.fruchterman.reingold, vertex.label.cex=0.5,vertex.size=edge_rp2$n, edge.width=edge_rp$count, edge.arrow.size=0.2, 
+     main="Who are most popular in Twitter?")
+dev.off()
+## The visualization shows how the social network of the students was structured. By having the # of replies each student gives and gets analyzed and having the netwrok visualized, the professor can figure out how the in- and out-degree centralities among his or her students -- The # of the arrows a vertex is being pointed by indicates the popularity, or indegree centrality while the size of the vertex indicates the out-degree centrality. By taking advantage of these two measures, the professor can group students for class activities or assignment teams based on both their class performances and the in/out degrees. 
+```
+
+
+## Auto-email
+```{r}
+install.packages("tm")
+install.packages("SnowballC")
+install.packages("wordcloud")
+install.packages("ggplot2")
+install.packages("dplyr")
+install.packages("tidyr")
+install.packages("topicmodels")
+library(tm)
+library(SnowballC)
+library(wordcloud)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(topicmodels)
+install.packages("sendmailR")
+library(sendmailR)
+install.packages("cronR")
+library(cronR)
+
+# Load the data
+scores2 <- select(scores, id, score1, score2, score3, score4, score5, score6)
+scores3 <- gather(scores2, "week", "score", 2:7)
+scores4 <- scores3 %>% filter() %>% group_by(week) %>% summarize(score=mean(score))
+
+#Auto-email to those did bad in quizes
+##Assume there is a csv. dataset {mail.list}
+if(scores4$score<0.5) {
+  
+sendmail_options(smtpServer="ASPMX.L.GOOGLE.COM")
+address <- as.character("mail.list$email_address")
+address <- paste("<", address, ">", sep = "")
+from <- "<PROFESSOR_EMAIL_ADDRESS>"
+to <- address
+subject <- "Quiz Help Available"
+body <- c(
+  "Hi,
+  Please schedule an appointment with me if you need any additional help to improve your performance!"
+)
+sendmail(from, to, subject, body)
+}
+
+
+```
+
